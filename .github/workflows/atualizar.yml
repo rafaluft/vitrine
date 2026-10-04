@@ -1,0 +1,38 @@
+name: Atualizar vitrine
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  montar:
+    runs-on: ubuntu-latest
+    outputs:
+      mudou: ${{ steps.sync.outputs.mudou }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: sync
+        env:
+          ORIGEM: ${{ secrets.ORIGEM }}
+          PUBLICO: https://rafaluft.github.io/vitrine/
+        run: python3 sync.py
+      - if: steps.sync.outputs.mudou == 'sim' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publicar:
+    needs: montar
+    if: needs.montar.outputs.mudou == 'sim' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
