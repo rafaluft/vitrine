@@ -25,6 +25,20 @@ for nome in scripts:
     js = re.sub(r'(GH\s*=\s*\{\s*repo:\s*)"[^"]*"', r'\1"-"', js)  # sem o endereço de onde os dados vêm
     (site / "js" / nome).write_text(js)
 
+# formulário do cliente (V1): a página, o catálogo e as fotos de cada opção (não tem o motor do gerador)
+try:
+    (site / "formulario" / "catalogo").mkdir(parents=True, exist_ok=True)
+    (site / "formulario" / "index.html").write_bytes(baixar("formulario/index.html"))
+    cat = baixar("formulario/catalogo.json")
+    (site / "formulario" / "catalogo.json").write_bytes(cat)
+    import json
+    for itens in json.loads(cat)["pecas"].values():
+        for it in itens:
+            if it.get("img"):
+                (site / "formulario" / it["img"]).write_bytes(baixar("formulario/" + it["img"]))
+except Exception as e:
+    print("sem formulário:", e)
+
 for nome in ["acervo.json", "cores.json", "trelicas.json"]:
     try:
         (site / "dados" / nome).write_bytes(baixar("dados/" + nome))
