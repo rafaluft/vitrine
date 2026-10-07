@@ -34,8 +34,9 @@ try:
     import json
     for itens in json.loads(cat)["pecas"].values():
         for it in itens:
-            if it.get("img"):
-                (site / "formulario" / it["img"]).write_bytes(baixar("formulario/" + it["img"]))
+            for campo in ("img", "imgOrig"):  # foto da peça (e a treliça nas cores originais)
+                if it.get(campo):
+                    (site / "formulario" / it[campo]).write_bytes(baixar("formulario/" + it[campo]))
 except Exception as e:
     print("sem formulário:", e)
 
