@@ -12,26 +12,25 @@ def baixar(caminho, base=ORIGEM):
 
 site = pathlib.Path("site")
 (site / "js").mkdir(parents=True, exist_ok=True)
-(site / "dados").mkdir(exist_ok=True)
 
-html = baixar("vitrine/index.html").decode()
-scripts = re.findall(r'src="\.\./js/([\w.-]+\.js)', html)
-html = html.replace("../js/", "js/").replace('"../"', '""').replace("../dados/", "dados/")
-html = html.replace("<head>", '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
+# vitrine pública: a página que só mostra o pacote pronto (publico/), sem o motor do site
+html = baixar("publico/index.html").decode()
+html = html.replace("../formulario/", "formulario/").replace("../js/", "js/")
 (site / "index.html").write_text(html)
+import json
+pacote = baixar("publico/pacote.json")
+(site / "pacote.json").write_bytes(pacote)
+(site / "sites").mkdir(exist_ok=True)
+for s in json.loads(pacote).get("sites", []):
+    (site / s["arquivo"]).write_bytes(baixar("publico/" + s["arquivo"]))
+(site / "js" / "dados-cores.js").write_bytes(baixar("js/dados-cores.js"))  # só as cores e as fotos de mármore (aba Cores)
 
-for nome in scripts:
-    js = baixar("js/" + nome).decode()
-    js = re.sub(r'(GH\s*=\s*\{\s*repo:\s*)"[^"]*"', r'\1"-"', js)  # sem o endereço de onde os dados vêm
-    (site / "js" / nome).write_text(js)
-
-# formulário do cliente (V1): a página, o catálogo e as fotos de cada opção (não tem o motor do gerador)
+# formulário do cliente (V1): a página, o catálogo e as fotos de cada opção
 try:
     (site / "formulario" / "catalogo").mkdir(parents=True, exist_ok=True)
     (site / "formulario" / "index.html").write_bytes(baixar("formulario/index.html"))
     cat = baixar("formulario/catalogo.json")
     (site / "formulario" / "catalogo.json").write_bytes(cat)
-    import json
     for itens in json.loads(cat)["pecas"].values():
         for it in itens:
             for campo in ("img", "imgOrig"):  # foto da peça (e a treliça nas cores originais)
@@ -39,12 +38,6 @@ try:
                     (site / "formulario" / it[campo]).write_bytes(baixar("formulario/" + it[campo]))
 except Exception as e:
     print("sem formulário:", e)
-
-for nome in ["acervo.json", "cores.json", "trelicas.json"]:
-    try:
-        (site / "dados" / nome).write_bytes(baixar("dados/" + nome))
-    except Exception:
-        print("sem dados/" + nome)
 
 h = hashlib.sha256()
 for f in sorted(p for p in site.rglob("*") if p.is_file()):
