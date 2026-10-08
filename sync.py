@@ -24,6 +24,11 @@ pacote = baixar("publico/pacote.json")
 for s in json.loads(pacote).get("sites", []):
     (site / s["arquivo"]).write_bytes(baixar("publico/" + s["arquivo"]))
 (site / "js" / "dados-cores.js").write_bytes(baixar("js/dados-cores.js"))  # só as cores e as fotos de mármore (aba Cores)
+for nome in ("motor-trelica.js", "trelica-cores.js"):  # só o desenho das treliças (o resto do motor não vai)
+    (site / "js" / nome).write_bytes(baixar("js/" + nome))
+(site / "topos").mkdir(exist_ok=True)
+for t in json.loads(pacote).get("topos", []):  # topos já montados (minipáginas)
+    (site / t["arquivo"]).write_bytes(baixar("publico/" + t["arquivo"]))
 
 # formulário do cliente (V1): a página, o catálogo e as fotos de cada opção
 try:
